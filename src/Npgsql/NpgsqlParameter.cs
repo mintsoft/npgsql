@@ -31,6 +31,7 @@ namespace Npgsql
         DbType? _cachedDbType;
         string _name = string.Empty;
         object? _value;
+        string _sourceColumn;
 
         internal string TrimmedName { get; private set; } = string.Empty;
 
@@ -449,7 +450,11 @@ namespace Npgsql
         /// <inheritdoc />
         [DefaultValue("")]
         [Category("Data")]
-        public sealed override string? SourceColumn { get; set; }
+        public sealed override string? SourceColumn
+        {
+            get => _sourceColumn;
+            set => _sourceColumn = value ?? string.Empty;
+        }
 
         /// <inheritdoc />
         [Category("Data"), DefaultValue(DataRowVersion.Current)]
