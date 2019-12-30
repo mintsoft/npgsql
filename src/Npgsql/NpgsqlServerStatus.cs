@@ -7,9 +7,9 @@ namespace Npgsql
 {
     class NpgsqlServerStatus
     {
-        internal static readonly ConcurrentDictionary<string, Status> Cache = new ConcurrentDictionary<string, Status>();
+        internal static readonly ConcurrentDictionary<string, ServerType> Cache = new ConcurrentDictionary<string, ServerType>();
 
-        internal enum Status
+        internal enum ServerType
         {
             Unknown,
             Down,
@@ -17,23 +17,23 @@ namespace Npgsql
             Secondary
         }
 
-        internal static async Task<Status> Load(NpgsqlConnection conn, NpgsqlTimeout timeout, bool async)
+        internal static async Task<ServerType> Load(NpgsqlConnection conn, NpgsqlTimeout timeout, bool async)
         {
-            var returnStatus = Status.Unknown;
+            var returnStatus = ServerType.Unknown;
             try
             {
                 var command = conn.CreateCommand();
                 command.CommandText = "SELECT pg_is_in_recovery();";
                 var recoveryStatus = (bool?)(await command.ExecuteScalarAsync());
-                returnStatus = recoveryStatus == false ? Status.Primary : Status.Secondary;
+                returnStatus = recoveryStatus == false ? ServerType.Primary : ServerType.Secondary;
             }
             catch (SocketException)
             {
-                returnStatus = Status.Down;
+                returnStatus = ServerType.Down;
             }
             catch (NpgsqlException)
             {
-                returnStatus = Status.Down;
+                returnStatus = ServerType.Down;
             }
 
             return returnStatus;

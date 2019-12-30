@@ -1469,10 +1469,6 @@ namespace Npgsql
         /// </summary>
         Primary,
         /// <summary>
-        ///  Secondary server is selected preferentially for the connection.
-        /// </summary>
-        PreferSecondary,
-        /// <summary>
         ///  Secondary server is selected for the connection.
         /// </summary>
         Secondary,
