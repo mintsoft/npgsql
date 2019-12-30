@@ -417,7 +417,19 @@ namespace Npgsql
                         isTheDesiredType = isTheDesiredType || (Settings.TargetServerType == TargetServerType.Secondary && ServerType == NpgsqlServerStatus.ServerType.Secondary);
                         if (isTheDesiredType == false)
                         {
-                            Break();
+                            /*
+                            lock(this)
+                            {
+
+                                WriteTerminate();
+                                Flush();
+                                State = ConnectorState.Closed;
+                                Cleanup();
+                            }*/
+                            //ResetDatabaseInfo();
+                            var conn = this.Connection;
+                            Close();
+                            this.Connection = conn;
                             continue;
                         }
 
@@ -468,11 +480,20 @@ namespace Npgsql
             TypeMapper.Bind(DatabaseInfo);
         }
 
+        internal void ResetDatabaseInfo()
+        {
+            DatabaseInfo = default!;
+            TypeMapper = new ConnectorTypeMapper(this);
+            NpgsqlDatabaseInfo.Cache.TryRemove(ConnectionString, out var database);
+
+            
+        }
 
         internal async Task UpdateServerPrimaryStatus(NpgsqlTimeout timeout, bool async)
         {
             NpgsqlServerStatus.Cache[ConnectedHost!] = ServerType = await NpgsqlServerStatus.Load(Connection!, timeout, async);
         }
+
         void WriteStartupMessage(string username)
         {
             var startupParams = new Dictionary<string, string>

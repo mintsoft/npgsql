@@ -26,7 +26,7 @@ namespace Npgsql
             {
                 using (var command = conn.CreateCommand())
                 {
-                    command.CommandText = "SELECT pg_is_in_recovery();";
+                    command.CommandText = "SELECT pg_is_in_recovery()";
                     command.AllResultTypesAreUnknown = true;
                     var recoveryStatus = (string?)(await command.ExecuteScalarAsync());
 
