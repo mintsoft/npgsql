@@ -417,19 +417,11 @@ namespace Npgsql
                         isTheDesiredType = isTheDesiredType || (Settings.TargetServerType == TargetServerType.Secondary && ServerType == NpgsqlServerStatus.ServerType.Secondary);
                         if (isTheDesiredType == false)
                         {
-                            /*
-                            lock(this)
-                            {
-
-                                WriteTerminate();
-                                Flush();
-                                State = ConnectorState.Closed;
-                                Cleanup();
-                            }*/
-                            //ResetDatabaseInfo();
-                            var conn = this.Connection;
+                            // Close() will cleanup everything, we only want the socket/server-side stuff cleaned up, as we're planning to
+                            // reuse the Connector in a moment anyway.
+                            var connection = Connection;
                             Close();
-                            this.Connection = conn;
+                            Connection = connection;
                             continue;
                         }
 
@@ -478,15 +470,6 @@ namespace Npgsql
 
             DatabaseInfo = database;
             TypeMapper.Bind(DatabaseInfo);
-        }
-
-        internal void ResetDatabaseInfo()
-        {
-            DatabaseInfo = default!;
-            TypeMapper = new ConnectorTypeMapper(this);
-            NpgsqlDatabaseInfo.Cache.TryRemove(ConnectionString, out var database);
-
-            
         }
 
         internal async Task UpdateServerPrimaryStatus(NpgsqlTimeout timeout, bool async)
