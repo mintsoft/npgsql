@@ -349,6 +349,12 @@ namespace Npgsql
 
         bool _isConnecting;
 
+        /// <summary>
+        /// Whether this connector represents a primary or secondary server
+        /// </summary>
+        /// 
+        internal NpgsqlServerStatus.Status ServerStatus = NpgsqlServerStatus.Status.Unknown;
+
         #endregion
 
         #region Open
@@ -396,6 +402,7 @@ namespace Npgsql
                 State = ConnectorState.Ready;
 
                 await LoadDatabaseInfo(timeout, async);
+                await UpdateServerPrimaryStatus(timeout, async);
 
                 if (Settings.Pooling && DatabaseInfo.SupportsDiscard)
                     GenerateResetMessage();
@@ -429,6 +436,11 @@ namespace Npgsql
             TypeMapper.Bind(DatabaseInfo);
         }
 
+
+        internal async Task UpdateServerPrimaryStatus(NpgsqlTimeout timeout, bool async)
+        {
+            NpgsqlServerStatus.Cache[Host] = ServerStatus = await NpgsqlServerStatus.Load(Connection!, timeout, async);
+        }
         void WriteStartupMessage(string username)
         {
             var startupParams = new Dictionary<string, string>
