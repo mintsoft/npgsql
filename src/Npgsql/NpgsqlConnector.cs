@@ -410,7 +410,7 @@ namespace Npgsql
                         State = ConnectorState.Ready;
 
                         await LoadDatabaseInfo(timeout, async);
-                        await UpdateServerPrimaryStatus(timeout, async);
+                        UpdateServerPrimaryStatus();
 
                         var isTheDesiredType = Settings.TargetServerType == TargetServerType.Any;
                         isTheDesiredType = isTheDesiredType || (Settings.TargetServerType == TargetServerType.Primary && ServerType == NpgsqlServerStatus.ServerType.Primary);
@@ -472,9 +472,9 @@ namespace Npgsql
             TypeMapper.Bind(DatabaseInfo);
         }
 
-        internal async Task UpdateServerPrimaryStatus(NpgsqlTimeout timeout, bool async)
+        internal void UpdateServerPrimaryStatus()
         {
-            NpgsqlServerStatus.Cache[ConnectedHost!] = ServerType = await NpgsqlServerStatus.Load(Connection!, timeout, async);
+            NpgsqlServerStatus.Cache[ConnectedHost!] = ServerType = NpgsqlServerStatus.Load(Connection!);
         }
 
         void WriteStartupMessage(string username)
@@ -1681,13 +1681,22 @@ namespace Npgsql
             try
             {
                 // There may already be a user action, or the connector may be closed etc.
+                UpdateServerPrimaryStatus();
+                /*
+                WriteQuery("SELECT pg_is_in_recovery()::text");
+                Flush();
+                
+                var columnMessage = ReadMessage();
+                var rowMessage = ReadMessage();
+                
+                */
+
                 if (!IsReady)
                     return;
 
                 Log.Trace("Performed keepalive", Id);
-                WritePregenerated(PregeneratedMessages.KeepAlive);
-                Flush();
-                SkipUntil(BackendMessageCode.ReadyForQuery);
+                
+
             }
             catch (Exception e)
             {
@@ -1812,8 +1821,11 @@ namespace Npgsql
                     if (keepaliveSent)
                         return;
                     keepaliveSent = true;
+                    /*
                     WritePregenerated(PregeneratedMessages.KeepAlive);
                     Flush();
+                    */
+                    UpdateServerPrimaryStatus();
                 }
                 finally
                 {
