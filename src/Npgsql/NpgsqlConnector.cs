@@ -284,7 +284,7 @@ namespace Npgsql
 
         #region Configuration settings
 
-        string? ConnectedHost;
+        internal string? ConnectedHost;
         string Host => Settings.Host!;
         int Port => Settings.Port;
         string KerberosServiceName => Settings.KerberosServiceName;
