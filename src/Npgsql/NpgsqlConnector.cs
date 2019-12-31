@@ -1826,10 +1826,6 @@ namespace Npgsql
                     if (keepaliveSent)
                         return;
                     keepaliveSent = true;
-                    /*
-                    WritePregenerated(PregeneratedMessages.KeepAlive);
-                    Flush();
-                    */
                     UpdateServerPrimaryStatus();
                 }
                 finally
