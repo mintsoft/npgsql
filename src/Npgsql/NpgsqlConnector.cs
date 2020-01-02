@@ -409,6 +409,7 @@ namespace Npgsql
                         if (IsAppropriateFor(Settings.TargetServerType) == false)
                         {
                             // TODO: There needs to be some sort of soft cleanup here, Close() is too much and Break() is too little.
+                            _socket.Close();
                             continue;
                         }
 
