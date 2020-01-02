@@ -134,7 +134,7 @@ namespace Npgsql
 
         void GetPoolAndSettings()
         {
-            if (PoolManager.TryGetValue(getPoolKey(_connectionString), out _pool))
+            if (PoolManager.TryGetValue(ConnectionStringToPoolKey(_connectionString), out _pool))
             {
                 Settings = _pool.Settings;  // Great, we already have a pool
                 return;
@@ -153,8 +153,24 @@ namespace Npgsql
             if (!Settings.Pooling)
                 return;
 
-            var newPool = new ConnectorPool(Settings, _connectionString);
-            _pool = PoolManager.GetOrAdd(getPoolKey(_connectionString), newPool);
+            // The connection string may be equivalent to one that has already been seen though (e.g. different
+            // ordering). Have NpgsqlConnectionStringBuilder produce a canonical string representation
+            // and recheck.
+            var canonical = Settings.ConnectionString;
+
+            if (PoolManager.TryGetValue(ConnectionStringToPoolKey(canonical), out _pool))
+            {
+                // The pool was found, but only under the canonical key - we're using a different version
+                // for the first time. Map it via our own key for next time.
+                _pool = PoolManager.GetOrAdd(ConnectionStringToPoolKey(_connectionString), _pool);
+                return;
+            }
+
+            // Really unseen, need to create a new pool
+            // The canonical pool is the 'base' pool so we need to set that up first. If someone beats us to it use what they put.
+            // The connection string pool can either be added here or above, if it's added above we should just use that.
+            var newPool = new ConnectorPool(Settings, canonical);
+            _pool = PoolManager.GetOrAdd(ConnectionStringToPoolKey(canonical), newPool);
 
             if (_pool == newPool)
             {
@@ -164,12 +180,14 @@ namespace Npgsql
                 NpgsqlEventSource.Log.PoolCreated();
             }
 
-            _pool = PoolManager.GetOrAdd(getPoolKey(_connectionString), _pool);
+            _pool = PoolManager.GetOrAdd(ConnectionStringToPoolKey(_connectionString), _pool);
         }
 
-        private string getPoolKey(string connectionString)
+        private string ConnectionStringToPoolKey(string connectionString)
         {
-            return Settings.Host + ";" + Settings.Port + ";" + Settings.Database;
+            if(Connector != null && Connector.ConnectedHost != null) 
+                return connectionString + ";ConnectedHost=" + Connector?.ConnectedHost??"";
+            return connectionString;
         }
 
         Task Open(bool async, CancellationToken cancellationToken)
@@ -1377,7 +1395,7 @@ namespace Npgsql
         /// <summary>
         /// Clear connection pool.
         /// </summary>
-        public static void ClearPool(NpgsqlConnection connection) => PoolManager.Clear(connection.getPoolKey(connection._connectionString));
+        public static void ClearPool(NpgsqlConnection connection) => PoolManager.Clear(connection.ConnectionStringToPoolKey(connection._connectionString));
 
         /// <summary>
         /// Clear all connection pools.
