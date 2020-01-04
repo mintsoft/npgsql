@@ -196,6 +196,9 @@ namespace Npgsql
                 return OpenLong();
             if (!_pool.TryAllocateFast(this, out Connector))
                 return OpenLong();
+            // originally this wasn't here, however it basically means that it'll reconnect if the connection type that it's got from
+            // the pool isn't Primary/Secondary as desired; I think this might end up basically meaning that in a failover scenario
+            // the connection pool isn't used after failover
             else if (Connector.IsAppropriateFor(Settings.TargetServerType) == false)
                 return OpenLong();
 
