@@ -237,7 +237,7 @@ namespace Npgsql
                     var timeout = new NpgsqlTimeout(TimeSpan.FromSeconds(ConnectionTimeout));
                     Transaction? transaction = null;
 
-                    if (_pool == null) // Unn-pooled connection (or user forgot to set connection string)
+                    if (_pool == null) // Un-pooled connection (or user forgot to set connection string)
                     {
                         if (string.IsNullOrEmpty(_connectionString))
                             throw new InvalidOperationException("The ConnectionString property has not been initialized.");
@@ -1391,7 +1391,7 @@ namespace Npgsql
         /// <summary>
         /// Clear connection pool.
         /// </summary>
-        public static void ClearPool(NpgsqlConnection connection) => PoolManager.Clear(connection._connectionString));
+        public static void ClearPool(NpgsqlConnection connection) => PoolManager.Clear(connection._connectionString);
 
         /// <summary>
         /// Clear all connection pools.
