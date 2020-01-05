@@ -463,22 +463,44 @@ namespace Npgsql
 
         internal void UpdateServerPrimaryStatus()
         {
-            var stateCacheKey = ConnectedHost! + ":" + Port;
-            NpgsqlServerStatus.Cache[stateCacheKey] = NpgsqlServerStatus.Load(this);
+            try
+            {
+                StartUserAction();
+                WritePregenerated(PregeneratedMessages.ServerIsSecondary);
+                Flush();
+
+                var columnsMsg = ReadMessage();
+                var rowMsg = (DataRowMessage)(ReadMessage());
+
+                var columnCount = ReadBuffer.ReadInt16();
+                var lengthOfColumnValue = ReadBuffer.ReadInt32();
+                var buffer = new byte[lengthOfColumnValue];
+                ReadBuffer.ReadBytes(buffer, 0, lengthOfColumnValue);
+
+                ConnectedServerType = buffer[0] == 'f' ? NpgsqlServerStatus.ServerType.Primary : NpgsqlServerStatus.ServerType.Secondary;
+
+                SkipUntil(BackendMessageCode.ReadyForQuery);
+                EndUserAction();
+            }
+            catch (SocketException)
+            {
+                ConnectedServerType = NpgsqlServerStatus.ServerType.Down;
+            }
+            catch (NpgsqlException)
+            {
+                ConnectedServerType = NpgsqlServerStatus.ServerType.Down;
+            }
         }
 
         internal bool IsAppropriateFor(TargetServerType targetServerType)
         {
-            var stateCacheKey = ConnectedHost! + ":" + Port;
-            if (NpgsqlServerStatus.Cache[stateCacheKey] == NpgsqlServerStatus.ServerType.Down)
+            if (ConnectedServerType == NpgsqlServerStatus.ServerType.Down)
                 return false;
-
             if (targetServerType == TargetServerType.Any)
                 return true;
-
-            if (NpgsqlServerStatus.Cache[stateCacheKey] == NpgsqlServerStatus.ServerType.Primary && targetServerType == TargetServerType.Primary)
+            if (ConnectedServerType == NpgsqlServerStatus.ServerType.Primary && targetServerType == TargetServerType.Primary)
                 return true;
-            if (NpgsqlServerStatus.Cache[stateCacheKey] == NpgsqlServerStatus.ServerType.Secondary && targetServerType == TargetServerType.Secondary)
+            if (ConnectedServerType == NpgsqlServerStatus.ServerType.Secondary && targetServerType == TargetServerType.Secondary)
                 return true;
 
             return false;
@@ -1940,6 +1962,7 @@ namespace Npgsql
         /// The connection's timezone as reported by PostgreSQL, in the IANA/Olson database format.
         /// </summary>
         internal string Timezone { get; private set; } = default!;
+        public NpgsqlServerStatus.ServerType ConnectedServerType { get; private set; }
 
         #endregion Supported features and PostgreSQL settings
 
