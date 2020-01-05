@@ -1711,13 +1711,11 @@ namespace Npgsql
             try
             {
                 // There may already be a user action, or the connector may be closed etc.
-                UpdateServerPrimaryStatus();
                 if (!IsReady)
                     return;
 
                 Log.Trace("Performed keepalive", Id);
-                
-
+                UpdateServerPrimaryStatus();
             }
             catch (Exception e)
             {
