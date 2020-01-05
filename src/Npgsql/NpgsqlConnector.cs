@@ -285,6 +285,7 @@ namespace Npgsql
         #region Configuration settings
 
         internal string? ConnectedHost;
+        internal NpgsqlServerStatus.ServerType ConnectedServerType;
         string Host => Settings.Host!;
         int Port => Settings.Port;
         string KerberosServiceName => Settings.KerberosServiceName;
@@ -1711,15 +1712,6 @@ namespace Npgsql
             {
                 // There may already be a user action, or the connector may be closed etc.
                 UpdateServerPrimaryStatus();
-                /*
-                WriteQuery("SELECT pg_is_in_recovery()::text");
-                Flush();
-                
-                var columnMessage = ReadMessage();
-                var rowMessage = ReadMessage();
-                
-                */
-
                 if (!IsReady)
                     return;
 
@@ -1962,7 +1954,6 @@ namespace Npgsql
         /// The connection's timezone as reported by PostgreSQL, in the IANA/Olson database format.
         /// </summary>
         internal string Timezone { get; private set; } = default!;
-        public NpgsqlServerStatus.ServerType ConnectedServerType { get; private set; }
 
         #endregion Supported features and PostgreSQL settings
 
