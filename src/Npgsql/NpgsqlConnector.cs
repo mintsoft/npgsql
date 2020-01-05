@@ -284,8 +284,6 @@ namespace Npgsql
 
         #region Configuration settings
 
-        internal string? ConnectedHost;
-        internal NpgsqlServerStatus.ServerType ConnectedServerType;
         string Host => Settings.Host!;
         int Port => Settings.Port;
         string KerberosServiceName => Settings.KerberosServiceName;
@@ -350,6 +348,9 @@ namespace Npgsql
         internal bool IsBroken => State == ConnectorState.Broken;
 
         bool _isConnecting;
+
+        internal string? ConnectedHost;
+        internal NpgsqlServerStatus.ServerType ConnectedServerType;
 
         #endregion
 
