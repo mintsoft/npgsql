@@ -200,9 +200,10 @@ namespace Npgsql
             // the pool isn't Primary/Secondary as desired; I think this might end up basically meaning that in a failover scenario
             // the connection pool isn't used after failover
             else if (Connector.IsAppropriateFor(Settings.TargetServerType) == false)
+            {
+                Close();
                 return OpenLong();
-
-            
+            }
 
             _userFacingConnectionString = _pool.UserFacingConnectionString;
 
