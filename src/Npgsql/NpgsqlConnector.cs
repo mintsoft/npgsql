@@ -349,8 +349,8 @@ namespace Npgsql
 
         bool _isConnecting;
 
-        internal string? ConnectedHost;
-        internal NpgsqlServerStatus.ServerType ConnectedServerType;
+        private string? ConnectedHost;
+        private NpgsqlServerStatus.ServerType ConnectedServerType;
 
         #endregion
 
