@@ -753,7 +753,7 @@ namespace Npgsql
                     Log.Trace($"Failed to connect to {endpoint}", e);
 
                     if (i == endpoints.Length - 1)
-                        throw e;
+                        throw new NpgsqlException("Exception while connecting", e);
                 }
             }
         }
