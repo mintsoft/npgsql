@@ -860,6 +860,7 @@ namespace Npgsql.Tests
         {
             using (var conn = OpenConnection())
             {
+
                 // Make sure messages are in English
                 conn.ExecuteNonQuery(@"SET lc_messages='en_US.UTF-8'");
                 conn.ExecuteNonQuery(@"
