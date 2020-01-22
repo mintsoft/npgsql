@@ -1408,7 +1408,7 @@ namespace Npgsql.Tests
             {
                 Pooling = false,
                 IntegratedSecurity = false,
-                TargetServerType = TargetServerType.Secondary
+                TargetServerType = TargetServerType.Primary
             };
 
             builder.Host = unknownIp + "," + builder.Host;
@@ -1417,6 +1417,30 @@ namespace Npgsql.Tests
             {
                 builder.Password = null;
                 using (OpenConnection(builder)) { }
+            }
+        }
+
+        [Test]
+        public void ConnectionToSecondaryWhenThereAreOnlyPrimariesThrows()
+        {
+            var builder = new NpgsqlConnectionStringBuilder(ConnectionString)
+            {
+                Pooling = false,
+                IntegratedSecurity = false,
+                TargetServerType = TargetServerType.Secondary
+            };
+
+            using (TestUtil.SetEnvironmentVariable("PGPASSWORD", builder.Password))
+            {
+                builder.Password = null;
+
+                Assert.That(() => { using (OpenConnection(builder)) { } },
+                            Throws.Exception.TypeOf<NpgsqlException>()
+                                .With.Property(nameof(NpgsqlException.Message)).Matches("was not of compatible type. Got: Primary Expected: Secondary")
+                                .Or.TypeOf<DecoderFallbackException>()
+                        );
+
+                
             }
         }
 
